@@ -26,6 +26,7 @@ while ($offset < $file_record_length - 8) {
 	my $nonresident = parse($file_record, $offset + 0x08, 1);
 	my $name_length = parse($file_record, $offset + 0x09, 1);
 	my $data_offset = parse($file_record, $offset + 0x14, 2);
+	my $attr_size =   parse($file_record, $offset + 0x30, 8, 'variable');
 	# Извлекаем данные атрибута
 	my $data = '';
 	my @dataruns = ();
@@ -66,7 +67,8 @@ while ($offset < $file_record_length - 8) {
 		type => $type,
 		resident => $nonresident,
 		dataruns => \@dataruns,
-		data => $data
+		data => $data,
+		size => $attr_size
 	};
 }
 

@@ -14,6 +14,8 @@ use Data::HexDump;
 $/ = undef;
 use utf8;
 
+use Term::ANSIColor 2.00 qw(:pushpop);
+
 # Читает 512 или length мегабайтов, начиная со смещения offset
 # diskread(offset, [length])
 sub diskRead {
@@ -63,7 +65,9 @@ sub parse {
 sub HEXED { '0x' . uc sprintf("%x", shift) };
 
 sub hexdump {
-	substr HexDump(substr shift, 0, 64), 79;
+	my $s = substr HexDump(substr shift, 0, 64), 79;
+	$s =~ s/\n+$//;
+	$s;
 }
 
 my %attr_names = (
@@ -92,21 +96,18 @@ sub DUMP(\@) {
 	my @attributes = @{shift;};
 	for my $a (@attributes) {
 		my $name = $attr_names{$a->{type}} // HEXED($a->{type});
-		my $resident = $a->{resident} ? "NONRESIDENT" : "RESIDENT";
-		print "$name\n$resident";
+		my $resident = $a->{resident} ? "nonresident" : "resident";
+		my $size = $a->{size};
+		print "$name \[$resident";
 		if ($a->{resident}) {
+			print ': ';
 			my @dataruns = @{$a->{dataruns}};
-			print ' [';
-			print HEXED(shift @dataruns) . '-' . HEXED(shift @dataruns);
-			while(@dataruns) { print ', ' . HEXED(shift @dataruns) . '-' . HEXED(shift @dataruns) };
-			print ']';
+			print HEXED(shift @dataruns) . '..' . HEXED(shift @dataruns);
+			while(@dataruns) { print ', ' . HEXED(shift @dataruns) . '..' . HEXED(shift @dataruns) };
 		}
-		print "\n";
-		if ($a->{resident}) {
-			print $a->{data} . "\n";
-		} else {
-			print $a->{data} . "\n\n";
-		}
+		print "]";
+		if ($a->{resident}) {print " SIZE: ${size} bytes"}
+		print "\n" . $a->{data} . "\n\n";
 	}
 }
 
